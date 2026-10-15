@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#0f172a">
@@ -14,8 +14,8 @@
     <section id="intro" class="panel intro-panel" aria-labelledby="intro-title">
       <div class="eyebrow"><span class="eyebrow-dot"></span> Cuestionario de conocimientos</div>
       <h1 id="intro-title">Conoce el Sistema de Gestión de la Calidad</h1>
-      <p class="lead">Responde 30 preguntas sobre los principios, procesos y objetivos del proyecto estratégico “Chiapas Puede”.</p>
-      <div class="facts" aria-label="Información del cuestionario"><div><strong>30</strong><span>preguntas</span></div><div><strong>5</strong><span>secciones</span></div><div><strong>1</strong><span>evaluación</span></div></div>
+      <p class="lead">Responde 64 preguntas sobre el Sistema de Gesti&oacute;n de la Calidad del proyecto &ldquo;Chiapas Puede&rdquo;. El orden cambia en cada intento.</p>
+      <div class="facts" aria-label="Información del cuestionario"><div><strong>64</strong><span>preguntas</span></div><div><strong>7</strong><span>secciones</span></div><div><strong>1</strong><span>evaluación</span></div></div>
       <form id="participant-form" class="participant-form">
         <label for="participant-name">Nombre completo</label>
         <div class="name-row"><input id="participant-name" name="name" autocomplete="name" maxlength="100" required placeholder="Escribe tu nombre" aria-describedby="name-help"><button class="button button-primary" type="submit">Comenzar <span aria-hidden="true">→</span></button></div>
@@ -24,9 +24,9 @@
       <p id="load-error" class="notice notice-error" role="alert" hidden></p>
     </section>
     <section id="quiz" class="panel quiz-panel" aria-labelledby="question-title" hidden>
-      <div class="quiz-topline"><span id="section-label" class="eyebrow">Sección</span><span id="progress-label" class="progress-label" aria-live="polite">Pregunta 1 de 30</span></div>
-      <div class="progress-track" role="progressbar" aria-label="Progreso del cuestionario" aria-valuemin="0" aria-valuemax="30" aria-valuenow="0"><span id="progress-fill"></span></div>
-      <div class="question-card"><h1 id="question-title" tabindex="-1"></h1><fieldset id="answer-options" class="answer-options"><legend class="sr-only">Selecciona una respuesta</legend></fieldset></div>
+      <div class="quiz-topline"><span id="section-label" class="eyebrow">Sección</span><span id="progress-label" class="progress-label" aria-live="polite">Pregunta 1 de 64</span></div>
+      <div class="progress-track" role="progressbar" aria-label="Progreso del cuestionario" aria-valuemin="0" aria-valuemax="64" aria-valuenow="0"><span id="progress-fill"></span></div>
+      <div class="question-card"><h1 id="question-title" tabindex="-1"></h1><p id="question-statement" class="question-statement" hidden></p><p id="question-instruction" class="question-instruction"></p><fieldset id="answer-options" class="answer-options"><legend class="sr-only">Selecciona una respuesta</legend></fieldset></div>
       <div class="quiz-controls"><button id="previous-button" class="button button-secondary" type="button">Anterior</button><span id="answered-label" class="answered-label" aria-live="polite"></span><button id="next-button" class="button button-primary" type="button">Siguiente <span aria-hidden="true">→</span></button><button id="submit-button" class="button button-primary" type="button" hidden>Enviar evaluación</button></div>
       <p id="quiz-error" class="notice notice-error" role="alert" hidden></p>
     </section>

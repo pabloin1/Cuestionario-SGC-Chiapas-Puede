@@ -324,3 +324,27 @@ td:first-child { font-weight: 650; }
   .quiz-controls #next-button,
   .quiz-controls #submit-button { grid-column: 2; grid-row: 1; }
 }
+.question-statement { margin: -12px 0 20px; padding: 16px 18px; color: var(--navy); background: #f1f5f9; border-left: 4px solid var(--blue); border-radius: 8px; font-size: 18px; line-height: 1.55; }
+.question-instruction { margin: -14px 0 20px; color: var(--muted); font-size: 14px; }
+.answer-options select { width: 100%; min-height: 48px; padding: 8px 12px; border: 1px solid #94a3b8; border-radius: 9px; color: var(--ink); background: #fff; font: inherit; }
+.matching-row { display: grid; grid-template-columns: minmax(160px, .8fr) minmax(0, 1.2fr); align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.matching-row label { color: var(--navy); font-weight: 700; line-height: 1.4; }
+.ordering-list { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; counter-reset: none; }
+.ordering-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 62px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 11px; background: #fff; }
+.ordering-row > span:first-child { color: #1e293b; line-height: 1.4; }
+.order-controls { display: flex; gap: 6px; }
+.order-button { width: 40px; height: 40px; min-height: 40px; font-size: 18px; }
+.order-button:disabled { opacity: .4; cursor: not-allowed; }
+.order-confirm { width: 100%; margin-top: 12px; }
+@media (max-width: 640px) {
+  .question-statement { margin: -8px 0 17px; padding: 13px; font-size: 16px; }
+  .question-instruction { margin-bottom: 16px; font-size: 13px; }
+  .matching-row { grid-template-columns: 1fr; gap: 7px; padding: 11px 0; }
+  .matching-row select { min-height: 46px; }
+  .ordering-row { min-height: 58px; padding: 9px; }
+}
+
+.table-pagination { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:16px; }
+.table-pagination .button { min-height:40px; padding-inline:16px; }
+.table-pagination-info { color:var(--muted); font-size:13px; text-align:center; }
+@media (max-width:640px) { .table-pagination { gap:8px; } .table-pagination .button { flex:1; min-width:0; padding-inline:9px; } .table-pagination-info { font-size:12px; white-space:nowrap; } }

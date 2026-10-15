@@ -36,7 +36,7 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 class AttemptPayload(BaseModel):
     name: str = Field(min_length=2, max_length=100)
-    answers: dict[int, int]
+    answers: dict[int, Any]
 
 
 class AdminLoginPayload(BaseModel):
@@ -115,24 +115,48 @@ def submit_attempt(payload: AttemptPayload) -> dict[str, Any]:
         raise HTTPException(status_code=422, detail="Escribe tu nombre completo.")
     question_ids = {question["id"] for question in QUESTIONS}
     if set(payload.answers) != question_ids:
-        raise HTTPException(status_code=422, detail="Responde las 30 preguntas antes de enviar.")
+        raise HTTPException(status_code=422, detail=f"Responde las {len(QUESTIONS)} preguntas antes de enviar.")
 
     snapshots = []
     score = 0
     for question in QUESTIONS:
-        selected_index = payload.answers[question["id"]]
-        if selected_index < 0 or selected_index >= len(question["options"]):
-            raise HTTPException(status_code=422, detail="Una respuesta seleccionada no es válida.")
-        correct_index = question["correct_index"]
-        is_correct = selected_index == correct_index
+        kind = question.get("type", "multiple_choice")
+        response_value = payload.answers[question["id"]]
+        if kind in {"multiple_choice", "true_false"}:
+            if type(response_value) is not int or response_value < 0 or response_value >= len(question["options"]):
+                raise HTTPException(status_code=422, detail="Una respuesta seleccionada no es v?lida.")
+            selected_text = question["options"][response_value]
+            correct_text = question["options"][question["correct_index"]]
+            is_correct = response_value == question["correct_index"]
+        elif kind == "multiple_select":
+            if not isinstance(response_value, list) or not response_value or any(type(i) is not int or i < 0 or i >= len(question["options"]) for i in response_value) or len(set(response_value)) != len(response_value):
+                raise HTTPException(status_code=422, detail="Selecciona una o m?s opciones v?lidas.")
+            selected_text = "; ".join(question["options"][i] for i in response_value)
+            correct_indices = question["correct_indices"]
+            correct_text = question["answer_text"]
+            is_correct = set(response_value) == set(correct_indices)
+        elif kind == "matching":
+            options = question["right_options"]
+            expected_count = len(question["left_items"])
+            if not isinstance(response_value, list) or len(response_value) != expected_count or any(type(i) is not int or i < 0 or i >= len(options) for i in response_value):
+                raise HTTPException(status_code=422, detail="Completa todas las relaciones con opciones v?lidas.")
+            selected_text = "; ".join(f"{left}: {options[choice]}" for left, choice in zip(question["left_items"], response_value))
+            correct_text = "; ".join(f"{left}: {options[choice]}" for left, choice in zip(question["left_items"], question["correct_matches"]))
+            is_correct = response_value == question["correct_matches"]
+        elif kind == "ordering":
+            items = question["items"]
+            if not isinstance(response_value, list) or len(response_value) != len(items) or sorted(response_value) != list(range(len(items))):
+                raise HTTPException(status_code=422, detail="Ordena todos los elementos antes de continuar.")
+            selected_text = " -> ".join(items[i] for i in response_value)
+            correct_text = " -> ".join(items[i] for i in question["correct_order"])
+            is_correct = response_value == question["correct_order"]
+        else:
+            raise HTTPException(status_code=500, detail="El examen contiene un tipo de pregunta desconocido.")
         score += int(is_correct)
         snapshots.append({
-            "question_id": question["id"],
-            "section": question["section"],
-            "question": question["question"],
-            "selected": question["options"][selected_index],
-            "correct": question["options"][correct_index],
-            "is_correct": is_correct,
+            "question_id": question["id"], "question_type": kind,
+            "section": question["section"], "question": question["question"],
+            "selected": selected_text, "correct": correct_text, "is_correct": is_correct,
         })
 
     submitted_at = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")

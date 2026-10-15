@@ -9,6 +9,9 @@ const filtersForm = document.querySelector("#report-filters");
 const exportButton = document.querySelector("#export-button");
 let activeFilters = {};
 let allResults = [];
+let questionStats = [];
+let questionPage = 1;
+const questionsPerPage = 5;
 function showError(node, message) { node.textContent = message; node.hidden = false; }
 function formatDate(value) {
   const date = new Date(value);
@@ -41,16 +44,36 @@ async function loadResults() {
   allResults = payload.results;
   document.querySelector("#attempt-count").textContent = payload.total_attempts.toLocaleString("es-MX");
   document.querySelector("#average-score").textContent = payload.average_score.toLocaleString("es-MX", { maximumFractionDigits: 1 });
+  document.querySelector("#average-total").textContent = payload.average_total.toLocaleString("es-MX", { maximumFractionDigits: 1 });
   document.querySelector("#passed-count").textContent = payload.passed_count.toLocaleString("es-MX");
   document.querySelector("#refuerzo-count").textContent = payload.needs_refuerzo_count.toLocaleString("es-MX");
   document.querySelector("#pass-rate").textContent = payload.pass_rate.toLocaleString("es-MX", { maximumFractionDigits: 1 });
   document.querySelector("#passing-percent").textContent = payload.passing_percent;
-  const period = [activeFilters.date_from && "Desde " + activeFilters.date_from, activeFilters.date_to && "Hasta " + activeFilters.date_to, activeFilters.name && "Nombre: " + activeFilters.name].filter(Boolean).join(" · ");
+  const period = [activeFilters.date_from && "Desde " + activeFilters.date_from, activeFilters.date_to && "Hasta " + activeFilters.date_to, activeFilters.name && "Nombre: " + activeFilters.name].filter(Boolean).join(" Â· ");
   document.querySelector("#report-period").textContent = period ? "Filtros aplicados: " + period : "Periodo: todas las evaluaciones registradas";
   fillTable("#sections-body", payload.sections, (x) => [x.section, x.correct, x.total, x.percent + "%"], "#sections-empty");
-  fillTable("#questions-body", payload.questions, (x) => [x.question_id, x.section + ": " + x.question, x.attempts, x.correct, x.incorrect, x.percent_correct + "%", x.most_common_wrong || "—"], "#questions-empty");
+  questionStats = payload.questions;
+  questionPage = 1;
+  renderQuestionStats();
   loginPanel.hidden = true; adminPanel.hidden = false; renderResults(); updateExport();
 }
+
+function renderQuestionStats() {
+  const totalPages = Math.max(1, Math.ceil(questionStats.length / questionsPerPage));
+  questionPage = Math.min(Math.max(questionPage, 1), totalPages);
+  const start = (questionPage - 1) * questionsPerPage;
+  const pageRows = questionStats.slice(start, start + questionsPerPage);
+  fillTable("#questions-body", pageRows, (x) => [x.question_id, x.type, x.section + ": " + x.question, x.attempts, x.correct, x.incorrect, x.percent_correct + "%", x.most_common_wrong || "â€”"], "#questions-empty");
+  const pagination = document.querySelector("#questions-pagination");
+  const pageInfo = document.querySelector("#questions-page-info");
+  const previousButton = document.querySelector("#questions-previous");
+  const nextButton = document.querySelector("#questions-next");
+  pagination.hidden = questionStats.length <= questionsPerPage;
+  pageInfo.textContent = `P\u00e1gina ${questionPage} de ${totalPages} \u00b7 ${questionStats.length ? start + 1 : 0}\u2013${Math.min(start + questionsPerPage, questionStats.length)} de ${questionStats.length} preguntas`;
+  previousButton.disabled = questionPage === 1;
+  nextButton.disabled = questionPage === totalPages;
+}
+
 function renderResults() {
   fillTable("#results-body", allResults, (item) => [item.participant_name, formatDate(item.submitted_at), item.score + " / " + item.total + " (" + item.percent + "%)", item.passed ? "Aprobado" : "Requiere refuerzo", ""], "#empty-results");
   [...resultsBody.rows].forEach((row, index) => {
@@ -64,14 +87,14 @@ async function showDetail(id) {
     const response = await fetch("/api/admin/results/" + id); const result = await response.json();
     if (!response.ok) throw new Error(result.detail || "No fue posible abrir el detalle.");
     document.querySelector("#detail-title").textContent = result.participant_name;
-    document.querySelector("#detail-meta").textContent = formatDate(result.submitted_at) + " · " + result.score + " de " + result.total + " (" + result.percent + "%) · " + (result.passed ? "Aprobado" : "Requiere refuerzo");
+    document.querySelector("#detail-meta").textContent = formatDate(result.submitted_at) + " Â· " + result.score + " de " + result.total + " (" + result.percent + "%) Â· " + (result.passed ? "Aprobado" : "Requiere refuerzo");
     const answers = document.querySelector("#detail-answers"); answers.replaceChildren();
     result.answers.forEach((item, index) => {
       const article = document.createElement("article"); article.className = "answer-detail " + (item.is_correct ? "is-correct" : "is-wrong");
       const section = document.createElement("p"); section.textContent = item.section;
       const title = document.createElement("h3"); title.textContent = (index + 1) + ". " + item.question;
       const selected = document.createElement("p"); selected.textContent = "Respuesta: " + item.selected;
-      const status = document.createElement("p"); status.className = "answer-status"; status.textContent = item.is_correct ? "Correcta" : "Incorrecta · Respuesta correcta: " + item.correct;
+      const status = document.createElement("p"); status.className = "answer-status"; status.textContent = item.is_correct ? "Correcta" : "Incorrecta Â· Respuesta correcta: " + item.correct;
       article.append(section, title, selected, status); answers.append(article);
     });
     detailDialog.showModal();
@@ -81,9 +104,16 @@ loginForm.addEventListener("submit", async (event) => {
   event.preventDefault(); loginError.hidden = true;
   try {
     const response = await fetch("/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: new FormData(loginForm).get("password") }) });
-    const payload = await response.json(); if (!response.ok) throw new Error(payload.detail || "No fue posible iniciar sesión.");
+    const payload = await response.json(); if (!response.ok) throw new Error(payload.detail || "No fue posible iniciar sesiÃ³n.");
     loginForm.reset(); await loadResults();
   } catch (error) { showError(loginError, error.message); }
+});
+document.querySelector("#questions-previous").addEventListener("click", () => {
+  if (questionPage > 1) { questionPage -= 1; renderQuestionStats(); }
+});
+document.querySelector("#questions-next").addEventListener("click", () => {
+  const totalPages = Math.ceil(questionStats.length / questionsPerPage);
+  if (questionPage < totalPages) { questionPage += 1; renderQuestionStats(); }
 });
 filtersForm.addEventListener("submit", async (event) => {
   event.preventDefault(); adminError.hidden = true;
@@ -95,3 +125,4 @@ document.querySelector("#logout-button").addEventListener("click", async () => {
 document.querySelector("#close-dialog").addEventListener("click", () => detailDialog.close());
 detailDialog.addEventListener("click", (event) => { if (event.target === detailDialog) detailDialog.close(); });
 loadResults().catch((error) => showError(adminError, error.message));
+
